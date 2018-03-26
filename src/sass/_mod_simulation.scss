@@ -1,0 +1,32 @@
+#centrepiece svg {
+  .links {
+    stroke-dasharray: 7 7;
+    stroke-linecap: round;
+
+    .transfer {
+      animation: stroke-forward 1s linear infinite;
+    }
+
+    .transfer-inverse {
+      animation: stroke-backward 1s linear infinite;
+    }
+
+    @keyframes stroke-forward {
+      0% {
+        stroke-dashoffset: 14;
+      }
+      100% {
+        stroke-dashoffset: 0;
+      }
+    }
+
+    @keyframes stroke-backward {
+      0% {
+        stroke-dashoffset: 0;
+      }
+      100% {
+        stroke-dashoffset: 14;
+      }
+    }
+  }
+}
