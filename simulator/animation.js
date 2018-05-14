@@ -108,75 +108,103 @@ add_cbar();
 // ###############################################################################################################
 // add netmeter
 
-var netmeter = (function (ratio) {
+var netmeter = (function(height, ratio, margin) {
+  var _width = 200;
+  var _height = 70;
+
   var container = svg.append("g")
     .attr("class", "net-meter")
-    .attr("width", 100)
-    .attr("height", 100)
+    .attr("width", _width)
+    .attr("height", _height)
     .attr("transform", "translate("
-      + (margin.left + height * ratio- margin.right - 120) + ","
-      + (margin.top + height - margin.bottom - 120)
+      + (margin.left + height * ratio- margin.right - 220) + ","
+      + (margin.top + height - margin.bottom - 90)
       + ")");
 
   /** background */
-  container.append("circle")
-    .attr("r", 50)
-    .attr("cx", 50 )
-    .attr("cy", 50)
-    .style("fill", "grey")
-    .style("stroke", "black")
-    .style("stroke-width", "1px");
+  container.append("rect")
+    .attr("width", _width)
+    .attr("height", _height)
+    .style("fill", "#dadfee");
+
+  var path = container.append("path")
+    .attr("stroke", "black")
+    .attr("stroke-width", "2px")
+    .attr("fill", "none");
 
 
   /** normal frequency */
   container.append("line")
-    .style("stroke", "black")
-    .style("stroke-width", "2px")
-    .attr("x1", 50)
-    .attr("y1", 50)
-    .attr("x2", 50)
+    .style("stroke", "grey")
+    .style("stroke-width", "4px")
+    .attr("x1", _width/2)
+    .attr("y1", _height)
+    .attr("x2", _width/2)
     .attr("y2", 0);
 
-  var neg = container.append("circle")
-    .attr("r", 5)
-    .attr("cx", 0)
-    .attr("cy",  50)
-    .style("fill", "black");
+  var neg = container.append("line")
+    .attr("stroke", "red")
+    .attr("stroke-width", "1px")
+    .attr("x1", _width/2)
+    .attr("y1", _height)
+    .attr("x2", _width/2)
+    .attr("y2", 0);
 
-  var pos = container.append("circle")
-    .attr("r", 5)
-    .attr("cx", 100)
-    .attr("cy",  50)
-    .style("fill", "black");
+  var pos = container.append("line")
+    .attr("stroke", "red")
+    .attr("stroke-width", "1x")
+    .attr("x1", _width/2)
+    .attr("y1", _height)
+    .attr("x2", _width/2)
+    .attr("y2", 0);
 
   var label = container.append("text")
-    .attr("x", 20)
+    .attr("x", _width/2)
     .attr("y", -10)
-    .attr("text-align", "center")
-    .text("50 Hz");
+    .attr("text-anchor", "middle")
+    .text("Average: 50 Hz");
 
   var label_bottom = container.append("text")
-    .attr("x", 0)
-    .attr("y", 115)
-    .attr("text-align", "center")
-    .text("50 Hz");
+    .attr("x", _width/2)
+    .attr("y", 85)
+    .attr("text-anchor", "middle")
+    .text("Min: 50 Hz, Max: 50 Hz");
 
   var pointer = container.append("line")
     .style("stroke", "black")
-    .style("stroke-width", "4px")
-    .attr("x1", 50)
-    .attr("y1", 50)
-    .attr("x2", 50)
+    .style("stroke-width", "2px")
+    .attr("x1", _width/2)
+    .attr("y1", _height)
+    .attr("x2", _width/2)
     .attr("y2", 0);
+
+  /** From https://bl.ocks.org/mbostock/4341954 */
+
+  var kernelDensityEstimator = function(kernel, X) {
+    return function(V) {
+      return X.map(function(x) {
+        return [x, d3.mean(V, function(v) { return kernel(x - v); })];
+      });
+    };
+  };
+
+  var kernelEpanechnikov = function(k) {
+    return function(v) {
+      return Math.abs(v /= k) <= 1 ? 0.75 * (1 - v * v) / k : 0;
+    };
+  };
 
   return {
     neg: neg,
     pos: pos,
     label: label,
     label_bottom: label_bottom,
-    pointer: pointer
+    pointer: pointer,
+    path: path,
+    kde: kernelDensityEstimator,
+    kernel: kernelEpanechnikov
   };
-})(ratio);
+})(height, ratio, margin);
 
 // ###############################################################################################################
 // fisheye distortion
@@ -380,24 +408,45 @@ function simulate_graph(graph_loaded){
 
     var meterScale = d3.scaleLinear()
       .clamp(true)
-      .domain([-10.0 + base_frequency, -0.2 + base_frequency,  base_frequency, 0.2 + base_frequency, 10.0 + base_frequency])
-      .range([0, Math.PI / 3, Math.PI / 2, 2 * Math.PI / 3, Math.PI])
-      .nice();
+      .domain([-10.0 + base_frequency,  base_frequency, 10.0 + base_frequency])
+      .range([0, 100, 200]);
 
-    netmeter.pointer.attr("x2", 50 + 50 * Math.cos( Math.PI + meterScale(avg) )).attr("y2",  50 * (1 - Math.sin( meterScale(avg)) ));
+    var meterRange = d3.scaleLinear()
+      .domain([0, 0.8])
+      .range([0, 70]);
+
+    var meterLine = d3.line()
+      .curve(d3.curveBasis)
+      .x(function(d) { return meterScale(d[0]); })
+      .y(function(d) { return 70 - meterRange(d[1]); });
+
+    var density = netmeter.kde(netmeter.kernel(1), meterScale.ticks(1000))(frequency);
+
+    netmeter.path
+      .datum(density)
+      .attr("d", meterLine);
+
+    var markers = {
+      min: meterScale(d3.min(frequency)),
+      avg: meterScale(avg),
+      max: meterScale(d3.max(frequency))
+    };
+
+    netmeter.pointer
+      .attr("x1", markers.avg)
+      .attr("x2", markers.avg);
 
     netmeter.neg
-      .attr("cx", 50 + 50 * Math.cos( Math.PI + meterScale(d3.min(frequency)) ) )
-      .attr("cy",  50 * (1 - Math.sin( meterScale(d3.min(frequency))) ))
-      .style("fill", "red");
+      .attr("x1", markers.min)
+      .attr("x2", markers.min);
 
     netmeter.pos
-      .attr("cx", 50 + 50 * Math.cos( Math.PI + meterScale(d3.max(frequency)) ) )
-      .attr("cy",  50 * (1 - Math.sin( meterScale(d3.max(frequency))) ))
-      .style("fill", "red");
+      .attr("x1", markers.max)
+      .attr("x2", markers.max);
 
-    netmeter.label.text(format(offset + avg) + " Hz");
-    netmeter.label_bottom.text("-/+: " + format(offset + d3.min(frequency)) + " / " + format(offset + d3.max(frequency)));
+    netmeter.label.text("Average: " + format(offset + avg) + " Hz");
+    netmeter.label_bottom.text("Min: " + format(offset + d3.min(frequency)) + " Hz, Max: " + format(offset + d3.max(frequency)) + " Hz");
+
 
     if (enable_fisheye){
       svg.on("mousemove", function() {
