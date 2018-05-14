@@ -118,7 +118,7 @@ var netmeter = (function(height, ratio, margin) {
     .attr("height", _height)
     .attr("transform", "translate("
       + (margin.left + height * ratio- margin.right - 220) + ","
-      + (margin.top + height - margin.bottom - 90)
+      + (margin.top + height - margin.bottom - 100)
       + ")");
 
   /** background */
@@ -126,6 +126,9 @@ var netmeter = (function(height, ratio, margin) {
     .attr("width", _width)
     .attr("height", _height)
     .style("fill", "#dadfee");
+
+  var axis = container.append("g")
+    .attr('transform', 'translate(0, ' + _height + ')');
 
   var path = container.append("path")
     .attr("stroke", "black")
@@ -166,7 +169,7 @@ var netmeter = (function(height, ratio, margin) {
 
   var label_bottom = container.append("text")
     .attr("x", _width/2)
-    .attr("y", 85)
+    .attr("y", _height + 35)
     .attr("text-anchor", "middle")
     .text("Min: 50 Hz, Max: 50 Hz");
 
@@ -195,6 +198,7 @@ var netmeter = (function(height, ratio, margin) {
   };
 
   return {
+    axis: axis,
     neg: neg,
     pos: pos,
     label: label,
@@ -414,6 +418,16 @@ function simulate_graph(graph_loaded){
     var meterRange = d3.scaleLinear()
       .domain([0, 0.8])
       .range([0, 70]);
+
+    netmeter.axis.call(
+      d3.axisBottom()
+        .scale(
+          d3.scaleLinear()
+            .domain([40, 60])
+            .range([0, 200])
+        )
+        .ticks(9)
+    );
 
     var meterLine = d3.line()
       .curve(d3.curveBasis)
