@@ -54,7 +54,7 @@ var yScale = d3.scaleLinear()
 // ###############################################################################################################
 // colors
 
-var color = d3.scalePow()
+var offset_color = d3.scalePow()
   .exponent(0.3)
   .domain([-Math.PI, 0, Math.PI]).clamp(true)
   .range(["#009fda", "white", "#f25b28"]);
@@ -92,7 +92,7 @@ function add_cbar() {
     .attr("height", 10)
     .style("stroke", "black")
     .style("stroke-width", "1px")
-    .style("fill", function(d) { return color(d); });
+    .style("fill", function(d) { return offset_color(d); });
 
   ticks
     .attr("x", function(d, i) { return (0.5 + i) * w; })
@@ -393,7 +393,7 @@ function simulate_graph(graph_loaded){
     var offset = 50.0 - base_frequency;
 
     node
-      .style("fill", function(d) { return color((phase[index[d.id]] + Math.PI) % ( 2*Math.PI) - Math.PI); })
+      .style("fill", function(d) { return offset_color((phase[index[d.id]] + Math.PI) % ( 2*Math.PI) - Math.PI); })
       .attr("r",
         function(d) {
           if(d.id == circleid){
@@ -631,17 +631,15 @@ function toggleFisheye() {
 
 function toggleColor() {
 	if (rainbow) {
-		rainbow = false;
-		color = d3.scalePow()
+		offset_color = d3.scalePow()
         .exponent(0.3)
         .domain([-Math.PI, 0, Math.PI]).clamp(true)
         .range(["#009fda", "white", "#f25b28"]);
+	} else {
+		offset_color = d3.scaleSequential(d3.interpolateRainbow)
+        .domain([-Math.PI, Math.PI]).clamp(true);
 	}
-	else
-	{
-		rainbow = true;
-		color = d3.scaleSequential(d3.interpolateRainbow);
-    add_cbar();
-	}
+  rainbow = !rainbow;
+  add_cbar();
 }
 
