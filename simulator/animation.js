@@ -54,34 +54,38 @@ var yScale = d3.scaleLinear()
 // ###############################################################################################################
 // colors
 
-var offset_color = d3.scalePow()
+var offset_color_red_blue = d3
+  .scalePow()
   .exponent(0.3)
-  .domain([-Math.PI, 0, Math.PI]).clamp(true)
-  .range(["#009fda", "white", "#f25b28"]);
+  .domain([-Math.PI, -Math.PI/3*2, -Math.PI/3, 0, Math.PI/3, Math.PI/3*2, Math.PI]).clamp(true)
+  .range(["#009fda", "#81bee7", "#c3def3", "white", "#ffcab5", "#ff956e", "#f25b28"]);
+// Intermediate tics generated in Lab model with http://davidjohnstone.net/pages/lch-lab-colour-gradient-picker
+
+var offset_color_rainbow = d3
+  .scaleSequential(d3.interpolateRainbow)
+  .domain([-Math.PI, Math.PI]).clamp(true);
+
 var rainbow = false;
+var offset_color = offset_color_red_blue;
 
-
-function add_cbar() {
-  var cbar = {
-    "val": [-Math.PI, -Math.PI/2, -Math.PI/10, 0, Math.PI/10, Math.PI/2, Math.PI],
-    "label": ["behind", "", "", "close", "", "", "advance"]
-  }; // -\u03C0
-
+function create_color_bar(color_scale, tics, labels, offset) {
+  offset = offset || 0;
   var w = 20;
 
   var colorbar = svg.append("g")
     .attr("class", "colorbar")
-    .attr("width", cbar.val.length * w)
+    .attr("width", tics.length * w)
     .attr("height", 10)
-    .attr("transform", "translate(" + (margin.left + 20) + "," +  (margin.top + 10)  + ")");
+    .attr("transform", "translate(" + (margin.left + 20) + "," +  (margin.top + 10 + offset)  + ")")
+    .click(toggleColor);
 
   var patches = colorbar.selectAll("rect")
-    .data(cbar.val)
+    .data(tics)
     .enter()
     .append("rect");
 
   var ticks = colorbar.selectAll("text")
-    .data(cbar.label)
+    .data(labels)
     .enter()
     .append("text");
 
@@ -92,7 +96,7 @@ function add_cbar() {
     .attr("height", 10)
     .style("stroke", "black")
     .style("stroke-width", "1px")
-    .style("fill", function(d) { return offset_color(d); });
+    .style("fill", color_scale);
 
   ticks
     .attr("x", function(d, i) { return (0.5 + i) * w; })
@@ -101,9 +105,19 @@ function add_cbar() {
     .text(function(d) { return d; });
 
   colorbar.append("text").attr("x", 0).attr("y", -10).text("relative clock position");
+
+  return {
+    set_color_scale: function (new_color_scale) {
+      patches.style("fill", new_color_scale);
+    }
+  };
 }
 
-add_cbar();
+var offset_color_bar = create_color_bar(
+  offset_color_red_blue,
+  [-Math.PI, -Math.PI/3*2, -Math.PI/3, 0, Math.PI/3, Math.PI/3*2, Math.PI],
+  ["behind", "", "", "close", "", "", "advance"]
+);
 
 // ###############################################################################################################
 // add netmeter
@@ -631,15 +645,11 @@ function toggleFisheye() {
 
 function toggleColor() {
 	if (rainbow) {
-		offset_color = d3.scalePow()
-        .exponent(0.3)
-        .domain([-Math.PI, 0, Math.PI]).clamp(true)
-        .range(["#009fda", "white", "#f25b28"]);
+    offset_color = offset_color_red_blue;
 	} else {
-		offset_color = d3.scaleSequential(d3.interpolateRainbow)
-        .domain([-Math.PI, Math.PI]).clamp(true);
+    offset_color = offset_color_rainbow;
 	}
+  offset_color_bar.set_color_scale(offset_color);
   rainbow = !rainbow;
-  add_cbar();
 }
 
