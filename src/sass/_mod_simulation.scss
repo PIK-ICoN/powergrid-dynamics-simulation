@@ -1,4 +1,33 @@
 #centrepiece svg {
+  .option-selectable {
+    opacity: 0.6;
+    filter: gray;
+    -webkit-filter: grayscale(1);
+    filter: grayscale(1);
+
+    .option-selection-indicator {
+      fill: transparent;
+      stroke: #00749e;
+      stroke-width: 0;
+    }
+
+    &.option-selected {
+      opacity: 1;
+      -webkit-filter: none;
+      filter: none;
+
+      .option-selection-indicator {
+        fill: #dadfee;
+      }
+    }
+
+    &:hover {
+      .option-selection-indicator {
+        stroke-width: 1px;
+      }
+    }
+  }
+
   .links {
     stroke-dasharray: 7 7;
     stroke-linecap: round;

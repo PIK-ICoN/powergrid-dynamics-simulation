@@ -446,6 +446,24 @@ h3 {
     .experiment .btn:active {
       background-color: #004f6b; }
 
+#centrepiece svg .option-selectable {
+  opacity: 0.6;
+  filter: gray;
+  -webkit-filter: grayscale(1);
+  filter: grayscale(1); }
+  #centrepiece svg .option-selectable .option-selection-indicator {
+    fill: transparent;
+    stroke: #00749e;
+    stroke-width: 0; }
+  #centrepiece svg .option-selectable.option-selected {
+    opacity: 1;
+    -webkit-filter: none;
+    filter: none; }
+    #centrepiece svg .option-selectable.option-selected .option-selection-indicator {
+      fill: #dadfee; }
+  #centrepiece svg .option-selectable:hover .option-selection-indicator {
+    stroke-width: 1px; }
+
 #centrepiece svg .links {
   stroke-dasharray: 7 7;
   stroke-linecap: round; }

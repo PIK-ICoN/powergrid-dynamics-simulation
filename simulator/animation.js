@@ -57,30 +57,48 @@ var yScale = d3.scaleLinear()
 var offset_color_red_blue = d3
   .scalePow()
   .exponent(0.3)
-  .domain([-Math.PI, -Math.PI/3*2, -Math.PI/3, 0, Math.PI/3, Math.PI/3*2, Math.PI]).clamp(true)
+  .domain([-Math.PI, -Math.PI/3*2, -Math.PI/3, 0, Math.PI/3, Math.PI/3*2, Math.PI])
+  .clamp(true)
   .range(["#009fda", "#81bee7", "#c3def3", "white", "#ffcab5", "#ff956e", "#f25b28"]);
-// Intermediate tics generated in Lab model with http://davidjohnstone.net/pages/lch-lab-colour-gradient-picker
+var frequency_color = d3
+  .scaleLinear()
+  .domain([40, 45, 47.67, 49, 49.67, 50, 50.33, 51, 52.33, 55, 60])
+  .clamp(true)
+  .range(["#009fda", "#61b1e2", "#8fc4e9", "#b7d8f1", "#dbebf8", "#ffffff", "#ffdfd2", "#ffc0a6", "#ff9f7c", "#fc7f52", "#f25b28"]);
+// Intermediate steps generated in Lab model with http://davidjohnstone.net/pages/lch-lab-colour-gradient-picker
 
 var offset_color_rainbow = d3
   .scaleSequential(d3.interpolateRainbow)
-  .domain([-Math.PI, Math.PI]).clamp(true);
+  .domain([-Math.PI, Math.PI])
+  .clamp(true);
 
 var rainbow = false;
 var offset_color = offset_color_red_blue;
+var animation_color_data = () => 0;
 
-function create_color_bar(color_scale, tics, labels, offset) {
+function create_color_bar(title, color_scale, steps, labels, offset) {
   offset = offset || 0;
-  var w = 20;
+  var w = 140 / steps.length;
 
   var colorbar = svg.append("g")
     .attr("class", "colorbar")
-    .attr("width", tics.length * w)
+    .attr("width", steps.length * w)
     .attr("height", 10)
     .attr("transform", "translate(" + (margin.left + 20) + "," +  (margin.top + 10 + offset)  + ")")
-    .click(toggleColor);
+    .classed("option-selectable", true);
 
-  var patches = colorbar.selectAll("rect")
-    .data(tics)
+  colorbar.append("rect")
+    .attr("x", -17)
+    .attr("y", -27)
+    .attr("width", 182)
+    .attr("height", 59)
+    .attr("rx", 5)
+    .attr("ry", 5)
+    .classed("option-selection-indicator", true);
+
+  var patches = colorbar.append("g")
+    .selectAll("rect")
+    .data(steps)
     .enter()
     .append("rect");
 
@@ -104,20 +122,39 @@ function create_color_bar(color_scale, tics, labels, offset) {
     .style("text-anchor", "middle")
     .text(function(d) { return d; });
 
-  colorbar.append("text").attr("x", 0).attr("y", -10).text("relative clock position");
+  colorbar.append("text").attr("x", 0).attr("y", -10).text(title);
 
   return {
+    container: colorbar,
     set_color_scale: function (new_color_scale) {
       patches.style("fill", new_color_scale);
+    },
+    set_selected: function (selected) {
+      colorbar.classed("option-selected", selected);
     }
   };
 }
 
 var offset_color_bar = create_color_bar(
-  offset_color_red_blue,
+  "relative clock position",
+  offset_color,
   [-Math.PI, -Math.PI/3*2, -Math.PI/3, 0, Math.PI/3, Math.PI/3*2, Math.PI],
   ["behind", "", "", "close", "", "", "advance"]
 );
+offset_color_bar.container.on('dblclick', toggleColor);
+
+var frequency_color_bar = create_color_bar(
+  "relative clock frequency",
+  frequency_color,
+  [40, 48, 50, 52, 60],
+  ["40 Hz", "", "50 Hz", "", "60 Hz"],
+  65
+);
+
+selectColorIndicator('offset');
+
+offset_color_bar.container.on('click', () => selectColorIndicator('offset'));
+frequency_color_bar.container.on('click', () => selectColorIndicator('frequency'));
 
 // ###############################################################################################################
 // add netmeter
@@ -395,7 +432,6 @@ function simulate_graph(graph_loaded){
   startSim();
 
   var radius = height / 150;
-  var r20 = radius / 20;
 
   // recieve data
   simWorker.onmessage = e => {
@@ -407,16 +443,8 @@ function simulate_graph(graph_loaded){
     var offset = 50.0 - base_frequency;
 
     node
-      .style("fill", function(d) { return offset_color((phase[index[d.id]] + Math.PI) % ( 2*Math.PI) - Math.PI); })
-      .attr("r",
-        function(d) {
-          if(d.id == circleid){
-            return 2 * radius + r20 * Math.abs(frequency[index[d.id]] - base_frequency);
-          }
-          else{
-            return radius + r20 * Math.abs(frequency[index[d.id]] - base_frequency);
-          }
-        });
+      .style("fill", animation_color_data)
+      .attr("r", function(d) { return d.id == circleid ? 2*radius : radius; });
 
     link
       .style("stroke-width", function(d) { return 10 * Math.log(1.05 + Math.abs(Math.sin(phase[index[d.source]] - phase[index[d.target]]))) + "px"; })
@@ -643,6 +671,21 @@ function toggleFisheye() {
   }
 }
 
+function selectColorIndicator(indicator) {
+  offset_color_bar.set_selected(indicator == 'offset');
+  frequency_color_bar.set_selected(indicator == 'frequency');
+
+  if (indicator == 'offset') {
+    animation_color_data = function (d) {
+      return offset_color((phase[index[d.id]] + Math.PI) % ( 2*Math.PI) - Math.PI);
+    };
+  } else {
+    animation_color_data = function (d) {
+      return frequency_color(frequency[index[d.id]] + 50.0 - base_frequency);
+    };
+  }
+}
+
 function toggleColor() {
 	if (rainbow) {
     offset_color = offset_color_red_blue;
@@ -650,6 +693,7 @@ function toggleColor() {
     offset_color = offset_color_rainbow;
 	}
   offset_color_bar.set_color_scale(offset_color);
+  selectColorIndicator('offset');
   rainbow = !rainbow;
 }
 
