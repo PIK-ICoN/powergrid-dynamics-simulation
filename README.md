@@ -2,7 +2,7 @@
 
 "Power Grid Dynamics Simulation" MPE Application
 
-This an adaptation of the [Interactive simulation of power grid dynamics](http://www.condynet.de/animation.html)
+This an adaptation of the [Interactive simulation of power grid dynamics](https://luap-pik.github.io/powergrid-dynamics-simulation/)
 application by Frank Hellmann and Paul Schultz for use in large touch screen kiosks in IMAGINARY exhibitions.
 
 ## Limitations
