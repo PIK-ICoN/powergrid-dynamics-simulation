@@ -448,8 +448,8 @@ function simulate_graph(graph_loaded){
 
     link
       .style("stroke-width", function(d) { return 10 * Math.log(1.05 + Math.abs(Math.sin(phase[index[d.source]] - phase[index[d.target]]))) + "px"; })
-      .classed("transfer", function(d) { return phase[index[d.target]] < phase[index[d.source]]; })
-      .classed("transfer-inverse", function(d) { return phase[index[d.target]] > phase[index[d.source]]; });
+      .classed("transfer", function(d) { return phase[index[d.target]] > phase[index[d.source]]; })
+      .classed("transfer-inverse", function(d) { return phase[index[d.target]] < phase[index[d.source]]; });
 
 
     var meterScale = d3.scaleLinear()
