@@ -960,7 +960,7 @@ browserify-zlib@~0.1.2:
   dependencies:
     pako "~0.2.0"
 
-browserify@^13.0.1:
+browserify@^13.3.0:
   version "13.3.0"
   resolved "https://registry.yarnpkg.com/browserify/-/browserify-13.3.0.tgz#b5a9c9020243f0c70e4675bec8223bc627e415ce"
   dependencies:
@@ -2064,9 +2064,9 @@ gulp-pug@^1.1.0:
     through2 "^2.0.1"
     util-extend "^1.0.3"
 
-gulp-rename@^1.2.2:
-  version "1.2.2"
-  resolved "https://registry.yarnpkg.com/gulp-rename/-/gulp-rename-1.2.2.tgz#3ad4428763f05e2764dec1c67d868db275687817"
+gulp-rename@^2.0.0:
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/gulp-rename/-/gulp-rename-2.0.0.tgz#9bbc3962b0c0f52fc67cd5eaff6c223ec5b9cf6c"
 
 gulp-sass@^2.1.0:
   version "2.3.2"
@@ -2130,7 +2130,7 @@ gulp-util@^3.0, gulp-util@^3.0.0, gulp-util@^3.0.7:
     through2 "^2.0.0"
     vinyl "^0.5.0"
 
-gulp@^3.9.0:
+gulp@^3.9.1:
   version "3.9.1"
   resolved "https://registry.yarnpkg.com/gulp/-/gulp-3.9.1.tgz#571ce45928dd40af6514fc4011866016c13845b4"
   dependencies:
